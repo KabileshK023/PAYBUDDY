@@ -20,11 +20,11 @@ function FriendPage({ friend, onBack, onAddEntry, onViewHistory }) {
   let balanceColor = "var(--text-main)";
 
   if (netBalance > 0) {
-    balanceText = `You give ${friend.name} ₹${netBalance.toFixed(2)}`;
-    balanceColor = "var(--text-main)";
-  } else if (netBalance < 0) {
-    balanceText = `${friend.name} give you ₹${Math.abs(netBalance).toFixed(2)}`;
+    balanceText = `${friend.name} gives you ₹${netBalance.toFixed(2)}`;
     balanceColor = "var(--teal-accent)";
+  } else if (netBalance < 0) {
+    balanceText = `You give ${friend.name} ₹${Math.abs(netBalance).toFixed(2)}`;
+    balanceColor = "var(--text-main)";
   }
 
   return (
