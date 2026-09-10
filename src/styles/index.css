@@ -454,3 +454,368 @@ body {
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════════
+   APP-LEVEL TAB STRIP  (Friends | My expenses)
+   — pill container, active tab gets full gradient fill
+═══════════════════════════════════════════════════════════ */
+
+.app-tab-strip {
+  display: flex;
+  width: 100%;
+  padding: 0 1.25rem 0.85rem 1.25rem;
+  gap: 0.5rem;
+}
+
+.app-tab-btn {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+.app-tab-btn.active {
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  border-color: transparent;
+  color: #fff;
+}
+
+.app-tab-btn:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPENSE TRACKER — SUMMARY CARDS
+═══════════════════════════════════════════════════════════ */
+
+.exp-summary-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.exp-summary-card {
+  flex: 1;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1rem 1rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.exp-summary-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.exp-summary-amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.15;
+}
+
+.exp-summary-amount--period {
+  color: var(--text-main); /* plain white like in screenshot */
+}
+
+/* "last 7 days" sub-label below amount */
+.exp-period-sublabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 0.1rem;
+}
+
+/* top row of period card: label + W/M/Y inline */
+.exp-period-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+/* Period W/M/Y toggle — pill buttons top-right */
+.exp-period-toggle {
+  display: flex;
+  gap: 0.2rem;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.exp-period-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.45rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  min-width: 24px;
+  min-height: 24px;
+  -webkit-text-fill-color: currentColor; /* prevent gradient bleed */
+}
+
+.exp-period-btn.active {
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPENSE TRACKER — ADD / HISTORY TOGGLE
+═══════════════════════════════════════════════════════════ */
+
+.exp-tab-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.exp-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  min-height: 40px;
+  -webkit-text-fill-color: currentColor;
+}
+
+.exp-tab-btn.active {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPENSE TRACKER — ADD FORM CARD
+═══════════════════════════════════════════════════════════ */
+
+.exp-form-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.exp-form-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 1rem;
+}
+
+/* Amount + description side by side */
+.exp-form-inputs {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  align-items: stretch;
+}
+
+.exp-amount-wrap {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  flex-shrink: 0;
+  width: 110px;
+  transition: border-color 0.2s;
+}
+
+.exp-amount-wrap:focus-within {
+  border-color: var(--gradient-start);
+}
+
+.exp-rupee-prefix {
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 500;
+  user-select: none;
+  flex-shrink: 0;
+  margin-right: 0.3rem;
+}
+
+.exp-amount-input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
+  padding: 0.85rem 0;
+  /* Hide number arrows */
+  -moz-appearance: textfield;
+}
+.exp-amount-input::-webkit-outer-spin-button,
+.exp-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.exp-desc-input {
+  flex: 1;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+
+.exp-desc-input:focus {
+  border-color: var(--gradient-start);
+}
+
+.exp-desc-input::placeholder {
+  color: var(--text-muted);
+}
+
+.exp-save-btn {
+  width: 100%;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  color: #fff;
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 50px;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.exp-save-btn:hover {
+  opacity: 0.92;
+}
+
+.exp-save-btn:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPENSE TRACKER — DAY-WISE HISTORY
+═══════════════════════════════════════════════════════════ */
+
+.exp-day-group {
+  margin-bottom: 1.25rem;
+}
+
+.exp-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+  padding: 0 0.15rem;
+}
+
+.exp-day-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.exp-day-total {
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPENSE TRACKER — RESET BUTTON
+═══════════════════════════════════════════════════════════ */
+
+.exp-reset-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #3a1a2e;
+  color: #9e6070;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  min-height: 44px;
+  margin-bottom: 1rem;
+}
+
+.exp-reset-btn.confirm {
+  border-color: #f87171;
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.08);
+}
+
+.exp-reset-btn:active {
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — expense tracker on small screens
+═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 420px) {
+  .exp-summary-row {
+    gap: 0.55rem;
+  }
+
+  .exp-summary-card {
+    padding: 0.85rem 0.75rem;
+  }
+
+  .exp-summary-amount {
+    font-size: 1.35rem;
+  }
+
+  .app-tab-btn {
+    font-size: 0.88rem;
+    padding: 0.65rem 0.5rem;
+    min-height: 42px;
+  }
+
+  .exp-amount-wrap {
+    width: 90px;
+  }
+}

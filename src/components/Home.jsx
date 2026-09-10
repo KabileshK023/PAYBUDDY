@@ -7,7 +7,7 @@ const getAvatarColor = (name) => {
   return `hsl(${hue}, 70%, 50%)`;
 };
 
-function Home({ friends, onAddFriend, onSelectFriend, onUpdateAvatar }) {
+function Home({ friends, onAddFriend, onSelectFriend, onUpdateAvatar, hideHeader }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [newFriendName, setNewFriendName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -40,9 +40,11 @@ function Home({ friends, onAddFriend, onSelectFriend, onUpdateAvatar }) {
 
   return (
     <>
-      <header className="header">
-        <span className="gradient-text">₹ PayBuddy</span>
-      </header>
+      {!hideHeader && (
+        <header className="header">
+          <span className="gradient-text">₹ PayBuddy</span>
+        </header>
+      )}
       
       <div className="container">
         {!isAdding ? (

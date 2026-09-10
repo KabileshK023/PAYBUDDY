@@ -3,6 +3,7 @@ import Home from './components/Home';
 import FriendPage from './components/FriendPage';
 import HistoryPage from './components/HistoryPage';
 import AddEntry from './components/AddEntry';
+import ExpenseTracker from './components/ExpenseTracker';
 
 function App() {
   const [friends, setFriends] = useState(() => {
@@ -18,6 +19,7 @@ function App() {
   });
 
   const [currentView, setCurrentView] = useState('home'); // 'home', 'friend', 'history', 'add_entry'
+  const [activeTab, setActiveTab] = useState('friends'); // 'friends' | 'expenses'
   const [activeFriendId, setActiveFriendId] = useState(null);
   const [transactionType, setTransactionType] = useState(null); // 'give' or 'receive'
 
@@ -96,15 +98,51 @@ function App() {
   // Router
   if (currentView === 'home' || !activeFriend) {
     return (
-      <Home 
-        friends={friends} 
-        onAddFriend={handleAddFriend}
-        onUpdateAvatar={handleUpdateAvatar}
-        onSelectFriend={(id) => {
-          setActiveFriendId(id);
-          setCurrentView('friend');
-        }}
-      />
+      <>
+        {/* ── Top nav with tab bar ── */}
+        <header className="header" style={{ flexDirection: 'column', gap: 0, padding: 0 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            padding: 'calc(1.25rem + env(safe-area-inset-top)) 1.25rem 0.75rem 1.25rem',
+          }}>
+            <span className="gradient-text">₹ PayBuddy</span>
+          </div>
+
+          {/* Tab strip */}
+          <div className="app-tab-strip">
+            <button
+              className={`app-tab-btn${activeTab === 'friends' ? ' active' : ''}`}
+              onClick={() => setActiveTab('friends')}
+            >
+              Friends
+            </button>
+            <button
+              className={`app-tab-btn${activeTab === 'expenses' ? ' active' : ''}`}
+              onClick={() => setActiveTab('expenses')}
+            >
+              My expenses
+            </button>
+          </div>
+        </header>
+
+        {activeTab === 'friends' ? (
+          <Home
+            friends={friends}
+            onAddFriend={handleAddFriend}
+            onUpdateAvatar={handleUpdateAvatar}
+            onSelectFriend={(id) => {
+              setActiveFriendId(id);
+              setCurrentView('friend');
+            }}
+            hideHeader
+          />
+        ) : (
+          <ExpenseTracker />
+        )}
+      </>
     );
   }
 
