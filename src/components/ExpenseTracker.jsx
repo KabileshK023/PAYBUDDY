@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getCategoryIcon } from '../utils/category';
+import { api } from '../services/api';
 
 const STORAGE_KEY = 'paybuddy_expenses_v1';
 
@@ -53,9 +54,26 @@ function ExpenseTracker() {
   const [mode, setMode] = useState('add');
   const [period, setPeriod] = useState('W');
   const [resetStep, setResetStep] = useState(0);
+  const isFirstRender = useRef(true);
 
+  // Load from MongoDB on initial mount
+  useEffect(() => {
+    api.getExpenses().then(remoteExpenses => {
+      if (remoteExpenses && remoteExpenses.length > 0) {
+        setExpenses(remoteExpenses);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteExpenses));
+      }
+    }).catch(console.error);
+  }, []);
+
+  // Save to localStorage & MongoDB on updates
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    api.syncExpenses(expenses);
   }, [expenses]);
 
   // ── derived totals ──────────────────────────────────────────────────────────

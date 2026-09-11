@@ -29,23 +29,20 @@ A sleek, modern, dark-mode financial companion built for tracking personal expen
 - **Frontend:** React 19, JavaScript (ES6+)
 - **Styling:** Custom CSS3 Design System (Glassmorphism, Vibrant Gradients, Safe Area Insets)
 - **Bundler:** Vite
-- **Persistence:** LocalStorage API
+- **Database:** MongoDB Atlas (via Vercel Serverless Functions) & LocalStorage Cache fallback
+- **Hosting:** Vercel
 
 ---
 
-## 📦 How to Deploy (Quick Steps)
+## 📦 How to Deploy on Vercel with MongoDB
 
-### Option 1: Deploy to Vercel (Recommended - 1 Click)
 1. Push your repository to GitHub: `https://github.com/KabileshK023/PAYBUDDY`
-2. Go to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Import the `PAYBUDDY` repository.
-4. Click **Deploy**. Vercel will automatically build and provide your live link!
-
-### Option 2: Deploy to Netlify
-1. Go to [Netlify](https://app.netlify.com).
-2. Choose **"Import an existing project from GitHub"**.
-3. Select `PAYBUDDY`.
-4. Build command: `npm run build`, Publish directory: `dist`. Click **Deploy**.
+2. Go to **[Vercel](https://vercel.com)** and click **"Add New Project"**.
+3. Import the **`PAYBUDDY`** repository.
+4. Under **Environment Variables**, add:
+   - **Key:** `MONGODB_URI`
+   - **Value:** `mongodb+srv://k75359023_db_user:ff2CQ5XzlJg8rANw@cluster0.8f4zm7k.mongodb.net/paybuddy?retryWrites=true&w=majority&appName=Cluster0`
+5. Click **Deploy**. Vercel will build and provide your live link!
 
 ---
 

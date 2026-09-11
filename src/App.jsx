@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Home from './components/Home';
 import FriendPage from './components/FriendPage';
 import HistoryPage from './components/HistoryPage';
 import AddEntry from './components/AddEntry';
 import ExpenseTracker from './components/ExpenseTracker';
+import { api } from './services/api';
 
 function App() {
   const [friends, setFriends] = useState(() => {
@@ -22,9 +23,26 @@ function App() {
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' | 'expenses'
   const [activeFriendId, setActiveFriendId] = useState(null);
   const [transactionType, setTransactionType] = useState(null); // 'give' or 'receive'
+  const isFirstRender = useRef(true);
 
+  // Load from MongoDB on initial mount
+  useEffect(() => {
+    api.getFriends().then(remoteFriends => {
+      if (remoteFriends && remoteFriends.length > 0) {
+        setFriends(remoteFriends);
+        localStorage.setItem('paybuddy_dark_v1', JSON.stringify(remoteFriends));
+      }
+    }).catch(console.error);
+  }, []);
+
+  // Save to localStorage & MongoDB on updates
   useEffect(() => {
     localStorage.setItem('paybuddy_dark_v1', JSON.stringify(friends));
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    api.syncFriends(friends);
   }, [friends]);
 
   const handleAddFriend = (name) => {
