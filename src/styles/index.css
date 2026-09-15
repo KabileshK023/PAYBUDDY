@@ -709,6 +709,95 @@ body {
   color: var(--text-muted);
 }
 
+/* ── Date field ── */
+
+.exp-date-row {
+  margin-bottom: 1rem;
+}
+
+.exp-date-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.exp-field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.exp-today-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--gradient-start);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  min-height: 28px;
+  -webkit-text-fill-color: var(--gradient-start);
+}
+
+.exp-today-btn:hover {
+  background: rgba(139, 124, 246, 0.1);
+  border-color: var(--gradient-start);
+}
+
+.exp-today-btn:active {
+  transform: scale(0.95);
+}
+
+.exp-date-wrap {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 1rem;
+  transition: border-color 0.2s;
+}
+
+.exp-date-wrap:focus-within {
+  border-color: var(--gradient-start);
+}
+
+.exp-date-icon {
+  font-size: 1rem;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.exp-date-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.85rem 0;
+  outline: none;
+  /* Make the native date picker match the dark theme */
+  color-scheme: dark;
+  min-width: 0;
+}
+
+.exp-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.exp-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* ── Save button ── */
+
 .exp-save-btn {
   width: 100%;
   background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
