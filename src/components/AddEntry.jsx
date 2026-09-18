@@ -17,10 +17,10 @@ const formatDate = (dateStr) => {
   return `${day} ${month} ${year} · ${hoursStr}:${minutes} ${ampm}`;
 };
 
-function AddEntry({ friend, type, onBack, onSave, onUpdate, onDelete }) {
-  const [amount, setAmount] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [editingTxId, setEditingTxId] = useState(null);
+function AddEntry({ friend, type, initialTx, onBack, onSave, onUpdate, onDelete }) {
+  const [amount, setAmount] = useState(initialTx ? initialTx.amount.toString() : '');
+  const [purpose, setPurpose] = useState(initialTx ? initialTx.purpose : '');
+  const [editingTxId, setEditingTxId] = useState(initialTx ? initialTx.id : null);
 
   const title = type === 'give' ? `I Paid ${friend.name}` : `${friend.name} Paid Me`;
   const btnColor = type === 'give' ? 'var(--gradient-start)' : 'var(--teal-accent)';

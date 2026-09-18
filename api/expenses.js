@@ -65,6 +65,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing expenses or expense in request body' });
     }
 
+    if (req.method === 'PUT' || req.method === 'PATCH') {
+      const { id, amount, description, date } = req.body || {};
+      if (!id) {
+        return res.status(400).json({ error: 'Missing id in request body' });
+      }
+      const updateData = {};
+      if (amount !== undefined) updateData.amount = Number(amount);
+      if (description !== undefined) updateData.description = description;
+      if (date !== undefined) updateData.date = date;
+      updateData.updatedAt = new Date();
+
+      await collection.updateOne({ id }, { $set: updateData });
+      return res.status(200).json({ success: true });
+    }
+
     if (req.method === 'DELETE') {
       const { id } = req.query;
       if (id) {

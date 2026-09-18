@@ -23,6 +23,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' | 'expenses'
   const [activeFriendId, setActiveFriendId] = useState(null);
   const [transactionType, setTransactionType] = useState(null); // 'give' or 'receive'
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const isFirstRender = useRef(true);
 
   // Load from MongoDB on initial mount
@@ -189,6 +190,7 @@ function App() {
         onDelete={handleDeleteTransaction}
         onEdit={(tx) => {
           setTransactionType(tx.type);
+          setEditingTransaction(tx);
           setCurrentView('add_entry');
         }}
       />
@@ -200,10 +202,23 @@ function App() {
       <AddEntry 
         friend={activeFriend}
         type={transactionType}
-        onBack={() => setCurrentView('friend')}
-        onSave={handleAddTransaction}
-        onUpdate={handleUpdateTransaction}
-        onDelete={handleDeleteTransaction}
+        initialTx={editingTransaction}
+        onBack={() => {
+          setEditingTransaction(null);
+          setCurrentView('friend');
+        }}
+        onSave={(amount, purpose) => {
+          handleAddTransaction(amount, purpose);
+          setEditingTransaction(null);
+        }}
+        onUpdate={(txId, amount, purpose) => {
+          handleUpdateTransaction(txId, amount, purpose);
+          setEditingTransaction(null);
+        }}
+        onDelete={(txId) => {
+          handleDeleteTransaction(txId);
+          setEditingTransaction(null);
+        }}
       />
     );
   }

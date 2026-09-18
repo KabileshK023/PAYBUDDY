@@ -54,6 +54,10 @@ function ExpenseTracker() {
   const [mode, setMode] = useState('add');
   const [period, setPeriod] = useState('W');
   const [resetStep, setResetStep] = useState(0);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editDate, setEditDate] = useState('');
   const isFirstRender = useRef(true);
 
   // Load from MongoDB on initial mount
@@ -122,6 +126,48 @@ function ExpenseTracker() {
     }]);
     setAmount('');
     setDescription('');
+  };
+
+  const handleStartEdit = (entry) => {
+    setEditingExpense(entry);
+    setEditAmount(entry.amount.toString());
+    setEditDescription(entry.description === 'No description' ? '' : entry.description);
+    setEditDate(toDateKey(entry.date));
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    const parsed = parseFloat(editAmount);
+    if (isNaN(parsed) || parsed <= 0) return;
+
+    let updatedDate = editingExpense.date;
+    if (editDate) {
+      try {
+        const orig = new Date(editingExpense.date);
+        const [y, m, d] = editDate.split('-').map(Number);
+        const newD = new Date(orig);
+        newD.setFullYear(y);
+        newD.setMonth(m - 1);
+        newD.setDate(d);
+        updatedDate = newD.toISOString();
+      } catch {
+        updatedDate = editingExpense.date;
+      }
+    }
+
+    setExpenses(prev => prev.map(item => {
+      if (item.id === editingExpense.id) {
+        return {
+          ...item,
+          amount: parsed,
+          description: editDescription.trim() || 'No description',
+          date: updatedDate,
+        };
+      }
+      return item;
+    }));
+
+    setEditingExpense(null);
   };
 
   const handleDelete = (id) => {
@@ -257,6 +303,14 @@ function ExpenseTracker() {
                           <span className="tx-amount">₹{entry.amount.toFixed(2)}</span>
                           <button
                             type="button"
+                            className="btn-edit"
+                            title="Edit entry"
+                            onClick={() => handleStartEdit(entry)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
                             className="btn-delete"
                             title="Delete entry"
                             onClick={() => handleDelete(entry.id)}
@@ -281,6 +335,92 @@ function ExpenseTracker() {
             {resetStep === 1 ? 'Tap again to confirm reset' : 'Reset history'}
           </button>
         </>
+      )}
+
+      {/* ── Edit Modal ── */}
+      {editingExpense && (
+        <div className="modal-backdrop" onClick={() => setEditingExpense(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">Edit Expense</h3>
+                <p className="modal-subtitle">
+                  Recorded on {formatDisplayDate(toDateKey(editingExpense.date))} · {formatTime(editingExpense.date)}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setEditingExpense(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label className="modal-label">Amount (₹)</label>
+                <div className="exp-amount-wrap" style={{ width: '100%' }}>
+                  <span className="exp-rupee-prefix">₹</span>
+                  <input
+                    type="number"
+                    className="exp-amount-input"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0.01"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label className="modal-label">Description / Purpose</label>
+                <input
+                  type="text"
+                  className="exp-desc-input"
+                  style={{ width: '100%' }}
+                  placeholder="What was it for? e.g. Tea"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="modal-label">Date</label>
+                <input
+                  type="date"
+                  className="exp-desc-input"
+                  style={{ width: '100%', colorScheme: 'dark' }}
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ flex: 1 }}
+                  onClick={() => setEditingExpense(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="gradient-btn"
+                  style={{ flex: 1 }}
+                >
+                  Update
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
