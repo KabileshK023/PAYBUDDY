@@ -709,6 +709,142 @@ body {
   color: var(--text-muted);
 }
 
+/* ── Date field ── */
+
+.exp-date-row {
+  margin-bottom: 1rem;
+}
+
+.exp-date-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.exp-field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.exp-today-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--gradient-start);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s;
+  min-height: 28px;
+  -webkit-text-fill-color: var(--gradient-start);
+}
+
+.exp-today-btn:hover {
+  background: rgba(139, 124, 246, 0.1);
+  border-color: var(--gradient-start);
+}
+
+.exp-today-btn:active {
+  transform: scale(0.95);
+}
+
+/*
+  Wrapper holds the icon, the DD/MM/YYYY display span, and the
+  invisible-but-functional native date input stacked on top.
+*/
+.exp-date-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 1rem;
+  transition: border-color 0.2s;
+  overflow: hidden;
+}
+
+.exp-date-wrap:focus-within {
+  border-color: var(--gradient-start);
+}
+
+.exp-date-icon {
+  font-size: 1rem;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/*
+  Visible DD/MM/YYYY text. The native input sits on top (opacity 0)
+  so the picker opens on tap, but this span provides the formatted display.
+*/
+.exp-date-display {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-main);
+  padding: 0.85rem 0;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+/*
+  The real date input sits absolutely over the whole wrapper.
+  Opacity 0 hides it visually but keeps it interactive so the
+  browser's native date picker opens on tap/click.
+*/
+.exp-date-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color-scheme: dark;
+  z-index: 2;
+}
+
+/* ── Toast notification ── */
+
+.exp-toast {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1030;
+  border: 1px solid var(--gradient-start);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  white-space: nowrap;
+  z-index: 200;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  animation: toastIn 0.2s ease-out;
+  max-width: calc(100vw - 2.5rem);
+  text-align: center;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Save button ── */
+
 .exp-save-btn {
   width: 100%;
   background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
@@ -821,10 +957,11 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   EDIT MODAL
+   EDIT MODAL & DIALOGS
 ═══════════════════════════════════════════════════════════ */
 
-.modal-backdrop {
+.modal-backdrop,
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -873,6 +1010,13 @@ body {
   margin-top: 0.25rem;
 }
 
+.modal-body {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
 .modal-close-btn {
   background: transparent;
   border: none;
@@ -919,4 +1063,110 @@ body {
     transform: translateY(0) scale(1);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DELETE FRIEND & ACTION BUTTONS
+═══════════════════════════════════════════════════════════ */
+
+.btn-danger {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.btn-danger:hover {
+  opacity: 0.92;
+}
+
+.btn-danger:active {
+  transform: scale(0.97);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.15s;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-danger-outline:hover {
+  background-color: rgba(248, 113, 113, 0.12);
+  border-color: #f87171;
+}
+
+.btn-danger-outline:active {
+  transform: scale(0.97);
+}
+
+.btn-icon-delete {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background-color 0.2s, transform 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.btn-icon-delete:hover {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.15);
+}
+
+.btn-icon-delete:active {
+  transform: scale(0.9);
+}
+
+.friend-balance-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+.friend-balance-badge.settled {
+  background-color: rgba(45, 212, 191, 0.12);
+  color: var(--teal-accent);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+}
+
+.friend-balance-badge.owes {
+  background-color: rgba(139, 124, 246, 0.12);
+  color: #a78bfa;
+}
+
+.friend-balance-badge.you-owe {
+  background-color: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
+}
+
 

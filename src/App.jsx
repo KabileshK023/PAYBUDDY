@@ -112,6 +112,14 @@ function App() {
     }));
   };
 
+  const handleDeleteFriend = (friendId) => {
+    setFriends(friends.filter(f => f.id !== friendId));
+    if (activeFriendId === friendId) {
+      setActiveFriendId(null);
+      setCurrentView('home');
+    }
+  };
+
   const activeFriend = friends.find(f => f.id === activeFriendId);
 
   // Router
@@ -151,6 +159,7 @@ function App() {
           <Home
             friends={friends}
             onAddFriend={handleAddFriend}
+            onDeleteFriend={handleDeleteFriend}
             onUpdateAvatar={handleUpdateAvatar}
             onSelectFriend={(id) => {
               setActiveFriendId(id);
@@ -173,6 +182,7 @@ function App() {
           setActiveFriendId(null);
           setCurrentView('home');
         }}
+        onDeleteFriend={handleDeleteFriend}
         onAddEntry={(type) => {
           setTransactionType(type);
           setCurrentView('add_entry');

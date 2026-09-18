@@ -108,6 +108,7 @@ function Home({ friends, onAddFriend, onSelectFriend, onUpdateAvatar, hideHeader
                   />
                 </label>
               </div>
+
               <span style={{ fontSize: '1.1rem', fontWeight: 500 }}>{friend.name}</span>
             </li>
           ))}

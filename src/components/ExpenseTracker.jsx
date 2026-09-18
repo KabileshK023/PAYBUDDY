@@ -6,33 +6,76 @@ const STORAGE_KEY = 'paybuddy_expenses_v1';
 
 // ── date helpers ──────────────────────────────────────────────────────────────
 
-const toDateKey = (date) => {
-  const d = new Date(date);
+/**
+ * Returns "YYYY-MM-DD" from either a full ISO string or a plain "YYYY-MM-DD"
+ * string. Always uses LOCAL time — never shifts due to UTC conversion.
+ */
+const toDateKey = (value) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
 
-const todayKey = () => toDateKey(new Date());
-
-const formatDisplayDate = (dateKey) => {
-  const today = todayKey();
-  const yesterday = toDateKey(Date.now() - 86400000);
-  if (dateKey === today) return 'Today';
-  if (dateKey === yesterday) return 'Yesterday';
-  const [y, m, d] = dateKey.split('-');
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${parseInt(d)} ${monthNames[parseInt(m) - 1]} ${y}`;
+/** Today as "YYYY-MM-DD" in local time. */
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const formatTime = (isoStr) => {
-  const d = new Date(isoStr);
+/**
+ * "YYYY-MM-DD" → "DD/MM/YYYY" for display.
+ * This is the single place that converts internal keys to user-facing format.
+ */
+const toDMY = (dateKey) => {
+  const [y, m, d] = dateKey.split('-');
+  return `${d}/${m}/${y}`;
+};
+
+/**
+ * Day group header label.
+ * Shows "Today", "Yesterday", or "DD/MM/YYYY".
+ */
+const formatGroupLabel = (dateKey) => {
+  const today = todayKey();
+  const yd = new Date();
+  yd.setDate(yd.getDate() - 1);
+  const yesterday = toDateKey(yd);
+  if (dateKey === today) return 'Today';
+  if (dateKey === yesterday) return 'Yesterday';
+  return toDMY(dateKey);
+};
+
+/**
+ * Sub-label shown under each history entry.
+ * New entries (plain YYYY-MM-DD) show "DD/MM/YYYY".
+ * Legacy entries (ISO timestamp) show "hh:mm am/pm".
+ */
+const formatEntrySubLabel = (entry) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+    return toDMY(entry.date);
+  }
+  // Legacy ISO timestamp — show time
+  const d = new Date(entry.date);
   let h = d.getHours();
   const min = String(d.getMinutes()).padStart(2, '0');
   const ampm = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
   return `${String(h).padStart(2, '0')}:${min} ${ampm}`;
+};
+
+/**
+ * Compute difference in whole calendar days between two "YYYY-MM-DD" keys.
+ * Uses local midnight — no UTC shift.
+ */
+const dayDiff = (fromKey, toKey) => {
+  const [fy, fm, fd] = fromKey.split('-').map(Number);
+  const [ty, tm, td] = toKey.split('-').map(Number);
+  const from = new Date(fy, fm - 1, fd);
+  const to   = new Date(ty, tm - 1, td);
+  return Math.round((to - from) / 86400000);
 };
 
 const periodSubLabel = { W: 'last 7 days', M: 'last 30 days', Y: 'last 12 months' };
@@ -49,16 +92,23 @@ function ExpenseTracker() {
     }
   });
 
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount]           = useState('');
   const [description, setDescription] = useState('');
-  const [mode, setMode] = useState('add');
-  const [period, setPeriod] = useState('W');
-  const [resetStep, setResetStep] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(todayKey); // "YYYY-MM-DD"
+  const [mode, setMode]               = useState('add');
+  const [period, setPeriod]           = useState('W');
+  const [resetStep, setResetStep]     = useState(0);
+  const [toast, setToast]             = useState(''); // error message
   const [editingExpense, setEditingExpense] = useState(null);
-  const [editAmount, setEditAmount] = useState('');
+  const [editAmount, setEditAmount]   = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editDate, setEditDate] = useState('');
+  const [editDate, setEditDate]       = useState('');
   const isFirstRender = useRef(true);
+
+  // Reset date to today whenever user switches to Add tab
+  useEffect(() => {
+    if (mode === 'add') setSelectedDate(todayKey());
+  }, [mode]);
 
   // Load from MongoDB on initial mount
   useEffect(() => {
@@ -80,6 +130,13 @@ function ExpenseTracker() {
     api.syncExpenses(expenses);
   }, [expenses]);
 
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(''), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   // ── derived totals ──────────────────────────────────────────────────────────
 
   const spentToday = useMemo(() => {
@@ -90,25 +147,30 @@ function ExpenseTracker() {
   }, [expenses]);
 
   const periodTotal = useMemo(() => {
-    const now = Date.now();
-    const msMap = { W: 7 * 86400000, M: 30 * 86400000, Y: 365 * 86400000 };
-    const cutoff = now - msMap[period];
-    return expenses
-      .filter(e => new Date(e.date).getTime() >= cutoff)
-      .reduce((s, e) => s + e.amount, 0);
+    const today = todayKey();
+    const limitDays = { W: 7, M: 30, Y: 365 }[period];
+
+    return expenses.reduce((sum, e) => {
+      const eKey = toDateKey(e.date);
+      const diff = dayDiff(eKey, today);
+      return (diff >= 0 && diff < limitDays) ? sum + e.amount : sum;
+    }, 0);
   }, [expenses, period]);
 
   // ── history grouped by day ──────────────────────────────────────────────────
 
   const groupedHistory = useMemo(() => {
     const groups = {};
-    [...expenses]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .forEach(e => {
-        const key = toDateKey(e.date);
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(e);
-      });
+    [...expenses].forEach(e => {
+      const key = toDateKey(e.date);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    });
+    // Sort entries within each day: newest first (id = Date.now())
+    Object.values(groups).forEach(arr =>
+      arr.sort((a, b) => Number(b.id) - Number(a.id))
+    );
+    // Sort day groups: newest date first
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [expenses]);
 
@@ -116,16 +178,28 @@ function ExpenseTracker() {
 
   const handleSave = (e) => {
     e.preventDefault();
+
+    // Validate amount
     const parsed = parseFloat(amount);
     if (isNaN(parsed) || parsed <= 0) return;
+
+    // Reject future dates
+    const today = todayKey();
+    if (selectedDate > today) {
+      setToast('Future dates are not allowed.');
+      return;
+    }
+
     setExpenses(prev => [...prev, {
       id: Date.now().toString(),
       amount: parsed,
       description: description.trim() || 'No description',
-      date: new Date().toISOString(),
+      date: selectedDate,
     }]);
+
     setAmount('');
     setDescription('');
+    setSelectedDate(todayKey());
   };
 
   const handleStartEdit = (entry) => {
@@ -140,20 +214,12 @@ function ExpenseTracker() {
     const parsed = parseFloat(editAmount);
     if (isNaN(parsed) || parsed <= 0) return;
 
-    let updatedDate = editingExpense.date;
-    if (editDate) {
-      try {
-        const orig = new Date(editingExpense.date);
-        const [y, m, d] = editDate.split('-').map(Number);
-        const newD = new Date(orig);
-        newD.setFullYear(y);
-        newD.setMonth(m - 1);
-        newD.setDate(d);
-        updatedDate = newD.toISOString();
-      } catch {
-        updatedDate = editingExpense.date;
-      }
+    if (editDate && editDate > todayKey()) {
+      setToast('Future dates are not allowed.');
+      return;
     }
+
+    const updatedDate = editDate || toDateKey(editingExpense.date);
 
     setExpenses(prev => prev.map(item => {
       if (item.id === editingExpense.id) {
@@ -188,16 +254,21 @@ function ExpenseTracker() {
   return (
     <div className="container" style={{ paddingTop: '1.25rem' }}>
 
+      {/* ── Toast ── */}
+      {toast && (
+        <div className="exp-toast">
+          <span>⚠️ {toast}</span>
+        </div>
+      )}
+
       {/* ── Summary cards ── */}
       <div className="exp-summary-row">
 
-        {/* Spent today */}
         <div className="exp-summary-card">
           <span className="exp-summary-label">Spent today</span>
           <span className="exp-summary-amount">₹{spentToday.toFixed(0)}</span>
         </div>
 
-        {/* Period card */}
         <div className="exp-summary-card">
           <div className="exp-period-header">
             <span className="exp-summary-label">Spent this</span>
@@ -241,8 +312,9 @@ function ExpenseTracker() {
         <div className="exp-form-card">
           <p className="exp-form-title">Add an expense</p>
           <form onSubmit={handleSave}>
+
+            {/* Amount + Description row */}
             <div className="exp-form-inputs">
-              {/* Amount */}
               <div className="exp-amount-wrap">
                 <span className="exp-rupee-prefix">₹</span>
                 <input
@@ -256,8 +328,6 @@ function ExpenseTracker() {
                   required
                 />
               </div>
-
-              {/* Description */}
               <input
                 type="text"
                 className="exp-desc-input"
@@ -265,6 +335,43 @@ function ExpenseTracker() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
               />
+            </div>
+
+            {/* Date field */}
+            <div className="exp-date-row">
+              <div className="exp-date-label-row">
+                <span className="exp-field-label">Date</span>
+                <button
+                  type="button"
+                  className="exp-today-btn"
+                  onClick={() => setSelectedDate(todayKey())}
+                >
+                  Today
+                </button>
+              </div>
+
+              <div className="exp-date-wrap">
+                <span className="exp-date-icon">📅</span>
+                <span className="exp-date-display">
+                  {selectedDate ? toDMY(selectedDate) : 'DD/MM/YYYY'}
+                </span>
+                <input
+                  type="date"
+                  className="exp-date-input"
+                  value={selectedDate}
+                  max={todayKey()}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val && val > todayKey()) {
+                      setToast('Future dates are not allowed.');
+                      return;
+                    }
+                    setSelectedDate(val);
+                  }}
+                  required
+                  aria-label="Expense date"
+                />
+              </div>
             </div>
 
             <button type="submit" className="exp-save-btn">
@@ -287,7 +394,7 @@ function ExpenseTracker() {
               return (
                 <div key={dateKey} className="exp-day-group">
                   <div className="exp-day-header">
-                    <span className="exp-day-label">{formatDisplayDate(dateKey)}</span>
+                    <span className="exp-day-label">{formatGroupLabel(dateKey)}</span>
                     <span className="exp-day-total">₹{dayTotal.toFixed(2)}</span>
                   </div>
                   <div className="tx-list">
@@ -297,7 +404,7 @@ function ExpenseTracker() {
                           <span className="tx-purpose">
                             {getCategoryIcon(entry.description)} {entry.description}
                           </span>
-                          <span className="tx-date">{formatTime(entry.date)}</span>
+                          <span className="tx-date">{formatEntrySubLabel(entry)}</span>
                         </div>
                         <div className="tx-right">
                           <span className="tx-amount">₹{entry.amount.toFixed(2)}</span>
@@ -345,7 +452,7 @@ function ExpenseTracker() {
               <div>
                 <h3 className="modal-title">Edit Expense</h3>
                 <p className="modal-subtitle">
-                  Recorded on {formatDisplayDate(toDateKey(editingExpense.date))} · {formatTime(editingExpense.date)}
+                  Recorded on {formatGroupLabel(toDateKey(editingExpense.date))}
                 </p>
               </div>
               <button
@@ -396,6 +503,7 @@ function ExpenseTracker() {
                   className="exp-desc-input"
                   style={{ width: '100%', colorScheme: 'dark' }}
                   value={editDate}
+                  max={todayKey()}
                   onChange={(e) => setEditDate(e.target.value)}
                   required
                 />

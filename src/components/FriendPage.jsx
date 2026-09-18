@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const getAvatarColor = (name) => {
   const hash = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -6,18 +6,20 @@ const getAvatarColor = (name) => {
   return `hsl(${hue}, 70%, 50%)`;
 };
 
-function FriendPage({ friend, onBack, onAddEntry, onViewHistory }) {
-  const iGiveTotal = friend.transactions
+function FriendPage({ friend, onBack, onDeleteFriend, onAddEntry, onViewHistory }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const iGiveTotal = (friend.transactions || [])
     .filter(tx => tx.type === 'give')
     .reduce((sum, tx) => sum + tx.amount, 0);
     
-  const theyGiveTotal = friend.transactions
+  const theyGiveTotal = (friend.transactions || [])
     .filter(tx => tx.type === 'receive')
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const netBalance = iGiveTotal - theyGiveTotal;
-  let balanceText = "All settled";
-  let balanceColor = "var(--text-main)";
+  let balanceText = "All settled ✓";
+  let balanceColor = "var(--teal-accent)";
 
   if (netBalance > 0) {
     balanceText = `${friend.name} gives you ₹${netBalance.toFixed(2)}`;
@@ -26,6 +28,12 @@ function FriendPage({ friend, onBack, onAddEntry, onViewHistory }) {
     balanceText = `You give ${friend.name} ₹${Math.abs(netBalance).toFixed(2)}`;
     balanceColor = "var(--text-main)";
   }
+
+  const handleDeleteConfirm = () => {
+    if (onDeleteFriend) {
+      onDeleteFriend(friend.id);
+    }
+  };
 
   return (
     <>
@@ -52,7 +60,15 @@ function FriendPage({ friend, onBack, onAddEntry, onViewHistory }) {
           </div>
           <span style={{ fontSize: '1.1rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{friend.name}</span>
         </div>
-        <div style={{ width: '68px', flexShrink: 0 }}></div>
+        <button 
+          type="button" 
+          className="btn-icon-delete"
+          title={`Delete ${friend.name}`}
+          onClick={() => setShowDeleteModal(true)}
+          style={{ margin: 0 }}
+        >
+          🗑️
+        </button>
       </header>
 
       <div className="container">
@@ -80,6 +96,35 @@ function FriendPage({ friend, onBack, onAddEntry, onViewHistory }) {
           View History
         </button>
       </div>
+
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Delete Friend?</h3>
+            <p className="modal-body">
+              Are you sure you want to delete <strong>{friend.name}</strong>? All transaction history for this friend will be permanently deleted.
+            </p>
+            <div className="modal-actions">
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                style={{ flex: 1 }}
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn-danger"
+                onClick={handleDeleteConfirm}
+              >
+                Delete Friend
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
