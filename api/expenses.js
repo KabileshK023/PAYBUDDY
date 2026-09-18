@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-user-id'
   );
 
   if (req.method === 'OPTIONS') {
@@ -19,8 +19,11 @@ export default async function handler(req, res) {
     const db = await getDatabase();
     const collection = db.collection('expenses');
 
+    // Extract unique user ID
+    const userId = req.headers['x-user-id'] || req.query.userId || (req.body && req.body.userId) || 'default_user';
+
     if (req.method === 'GET') {
-      const expenses = await collection.find({}).sort({ date: -1 }).toArray();
+      const expenses = await collection.find({ userId }).sort({ date: -1 }).toArray();
       const formatted = expenses.map(e => ({
         id: e.id || e._id.toString(),
         amount: Number(e.amount),
@@ -33,15 +36,16 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { expenses, expense } = req.body || {};
 
-      // If whole list is sent for sync
+      // If whole list is sent for sync for this user
       if (Array.isArray(expenses)) {
-        await collection.deleteMany({});
+        await collection.deleteMany({ userId });
         if (expenses.length > 0) {
           const docs = expenses.map(e => ({
             id: e.id,
             amount: Number(e.amount),
             description: e.description,
             date: e.date,
+            userId,
             updatedAt: new Date()
           }));
           await collection.insertMany(docs);
@@ -56,6 +60,7 @@ export default async function handler(req, res) {
           amount: Number(expense.amount),
           description: expense.description || 'No description',
           date: expense.date || new Date().toISOString(),
+          userId,
           createdAt: new Date()
         };
         await collection.insertOne(newDoc);
@@ -76,17 +81,17 @@ export default async function handler(req, res) {
       if (date !== undefined) updateData.date = date;
       updateData.updatedAt = new Date();
 
-      await collection.updateOne({ id }, { $set: updateData });
+      await collection.updateOne({ id, userId }, { $set: updateData });
       return res.status(200).json({ success: true });
     }
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
       if (id) {
-        await collection.deleteOne({ id });
+        await collection.deleteOne({ id, userId });
         return res.status(200).json({ success: true });
       } else {
-        await collection.deleteMany({});
+        await collection.deleteMany({ userId });
         return res.status(200).json({ success: true, cleared: true });
       }
     }

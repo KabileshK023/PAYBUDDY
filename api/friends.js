@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-user-id'
   );
 
   if (req.method === 'OPTIONS') {
@@ -19,8 +19,11 @@ export default async function handler(req, res) {
     const db = await getDatabase();
     const collection = db.collection('friends');
 
+    // Extract unique user ID
+    const userId = req.headers['x-user-id'] || req.query.userId || (req.body && req.body.userId) || 'default_user';
+
     if (req.method === 'GET') {
-      const friends = await collection.find({}).toArray();
+      const friends = await collection.find({ userId }).toArray();
       // Format _id to id if needed
       const formatted = friends.map(f => ({
         id: f.id || f._id.toString(),
@@ -34,15 +37,16 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { friends, friend } = req.body || {};
 
-      // If whole list is sent for sync
+      // If whole list is sent for sync for this user
       if (Array.isArray(friends)) {
-        await collection.deleteMany({});
+        await collection.deleteMany({ userId });
         if (friends.length > 0) {
           const docs = friends.map(f => ({
             id: f.id,
             name: f.name,
             avatar: f.avatar || null,
             transactions: f.transactions || [],
+            userId,
             updatedAt: new Date()
           }));
           await collection.insertMany(docs);
@@ -57,6 +61,7 @@ export default async function handler(req, res) {
           name: friend.name,
           avatar: friend.avatar || null,
           transactions: friend.transactions || [],
+          userId,
           createdAt: new Date()
         };
         await collection.insertOne(newDoc);
@@ -76,8 +81,8 @@ export default async function handler(req, res) {
       }
 
       await collection.updateOne(
-        { id: targetId },
-        { $set: { ...data, updatedAt: new Date() } },
+        { id: targetId, userId },
+        { $set: { ...data, userId, updatedAt: new Date() } },
         { upsert: true }
       );
       return res.status(200).json({ success: true });
@@ -86,10 +91,10 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = req.query;
       if (id) {
-        await collection.deleteOne({ id });
+        await collection.deleteOne({ id, userId });
         return res.status(200).json({ success: true });
       } else {
-        await collection.deleteMany({});
+        await collection.deleteMany({ userId });
         return res.status(200).json({ success: true, cleared: true });
       }
     }

@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getCategoryIcon } from '../utils/category';
 import { api } from '../services/api';
 
-const STORAGE_KEY = 'paybuddy_expenses_v1';
-
 // ── date helpers ──────────────────────────────────────────────────────────────
 
 /**
@@ -85,7 +83,8 @@ const periodSubLabel = { W: 'last 7 days', M: 'last 30 days', Y: 'last 12 months
 function ExpenseTracker() {
   const [expenses, setExpenses] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const key = api.getExpensesStorageKey();
+      const saved = localStorage.getItem(key) || localStorage.getItem('paybuddy_expenses_v1');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -115,14 +114,14 @@ function ExpenseTracker() {
     api.getExpenses().then(remoteExpenses => {
       if (remoteExpenses && remoteExpenses.length > 0) {
         setExpenses(remoteExpenses);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteExpenses));
+        localStorage.setItem(api.getExpensesStorageKey(), JSON.stringify(remoteExpenses));
       }
     }).catch(console.error);
   }, []);
 
   // Save to localStorage & MongoDB on updates
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    localStorage.setItem(api.getExpensesStorageKey(), JSON.stringify(expenses));
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
